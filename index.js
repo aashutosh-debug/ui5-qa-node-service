@@ -2,13 +2,14 @@ import express from "express";
 import pg from "pg";
 import bcrypt from "bcrypt";
 // import jwt from "jsonwebtoken";
-// import cors from "cors";
+import cors from "cors";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 const PORT = 3000;
 
 const { Pool } = pg;
