@@ -10,7 +10,9 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(cors({
-  origin: "*"   // Or restrict to SAP BAS URL
+  origin: "*",   // Or restrict to SAP BAS URL
+  methods: "GET,POST,PUT,DELETE,OPTIONS",
+  allowedHeaders: "Content-Type,Authorization"
 }));
 const PORT = 3000;
 
