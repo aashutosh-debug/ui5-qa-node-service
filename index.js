@@ -50,8 +50,9 @@ app.post("/auth/company/login", async (req, res) => {
     if (!validPassword)
       return res.status(401).json({ error: "Invalid password" });
 
+    delete user["password"];
     const token = "token"; //generateToken(user);
-    res.json({ success: true, token, role: user.role });
+    res.json({ success: true, token: token, value: user });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
