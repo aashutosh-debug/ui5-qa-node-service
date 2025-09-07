@@ -74,6 +74,19 @@ app.post("/addjobs", async (req, res) => {
   }
 });
 
+//Get Jobs
+app.get("/jobs/:id", async (req, res) => {
+  try {
+    const companyId =  req.params.id;
+    const result = await pool.query("SELECT id, title, description, created_at FROM jobs WHERE company_id=$1", [
+      companyId
+    ]);
+    res.json({ success: true, value: result.rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 //Questions
 app.post("/question", async (req, res) => {
   try {
