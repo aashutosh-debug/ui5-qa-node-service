@@ -134,6 +134,23 @@ app.get("/question/:job_id", async (req, res) => {
   }
 });
 
+//Delete Questions
+app.post("/question/delete", async (req, res) => {
+  try {
+    const {
+      ids
+    } = req.body;
+
+    const result = await pool.query("DELETE FROM questions WHERE id = ANY($1::int[]);", [
+      ids,
+    ]);
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 //Candidates
 app.post("/candidate", async (req, res) => {
   try {
