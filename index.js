@@ -97,10 +97,11 @@ app.post("/question", async (req, res) => {
       company_id,
       difficulty,
       created_by,
-      tags,
+      options,
+      answers
     } = req.body;
     const result = await pool.query(
-      "INSERT INTO questions (job_id, question_text, question_type, company_id, difficulty, created_by, tags ) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
+      "INSERT INTO questions (job_id, question_text, question_type, company_id, difficulty, created_by, options, answers ) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
       [
         job_id,
         question_text,
@@ -108,7 +109,8 @@ app.post("/question", async (req, res) => {
         company_id,
         difficulty,
         created_by,
-        tags,
+        options,
+        answers
       ]
     );
     res.json({ success: true, question: result.rows[0] });
