@@ -87,6 +87,30 @@ app.get("/jobs/:id", async (req, res) => {
   }
 });
 
+//Delete Job
+app.get("/job/delete/:id", async (req, res) => {
+  const client = await pool.connect();
+  try {
+    //const client = await pool.connect();
+    await client.query("BEGIN");
+
+    await client.query("DELETE FROM jobs WHERE id = $1", [req.params.id]);
+    await client.query("DELETE FROM questions WHERE id in (SELECT id FROM questions Where job_id = $1)", [req.params.id]);
+
+    await client.query("COMMIT");
+    console.log("Transaction committed!");
+
+    res.json({ success: true });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("Transaction rolled back!", err);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+
 //Questions
 app.post("/question", async (req, res) => {
   try {
