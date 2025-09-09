@@ -125,8 +125,8 @@ app.get("/question/:job_id", async (req, res) => {
     const result = await pool.query("SELECT * FROM questions WHERE job_id=$1", [
       job_id,
     ]);
-    if (result.rows.length === 0)
-      return res.status(401).json({ error: "Job not found" });
+    // if (result.rows.length === 0)
+    //   return res.status(401).json({ error: "Questions not found" });
 
     res.json({ success: true, value: result.rows });
   } catch (err) {
