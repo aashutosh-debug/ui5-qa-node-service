@@ -101,7 +101,7 @@ app.post("/question", async (req, res) => {
       answers
     } = req.body;
     const result = await pool.query(
-      "INSERT INTO questions (job_id, question_text, question_type, company_id, difficulty, created_by, options, answers ) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
+      "INSERT INTO questions (job_id, question_text, question_type, company_id, difficulty, created_by, options, answers ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
       [
         job_id,
         question_text,
