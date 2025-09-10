@@ -74,6 +74,21 @@ app.post("/addjobs", async (req, res) => {
   }
 });
 
+app.put("/jobs/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { title, description } = req.body;
+    const result = await pool.query(
+      "UPDATE jobs SET title = $1, description = $2 WHERE id = $3 RETURNING id",
+      [title, description, id]
+    );
+    res.json({ success: true, jobs: result.rowCount });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 //Get Jobs
 app.get("/jobs/:id", async (req, res) => {
   try {
