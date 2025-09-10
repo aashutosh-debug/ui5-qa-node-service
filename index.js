@@ -191,7 +191,7 @@ app.post("/question/delete", async (req, res) => {
 });
 
 //Candidates
-app.post("/candidate", async (req, res) => {
+app.post("/auth/candidate/signup", async (req, res) => {
   try {
     const {
       name,
@@ -202,12 +202,13 @@ app.post("/candidate", async (req, res) => {
       experience,
       location 
     } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
     const result = await pool.query(
       "INSERT INTO candidates (name, email, password, phone, skills, experience, location) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
       [
         name,
         email,
-        password,
+        hashedPassword,
         phone,
         skills,
         experience,
@@ -215,6 +216,29 @@ app.post("/candidate", async (req, res) => {
       ]
     );
     res.json({ success: true, test: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Auth: Login
+app.post("/auth/candidate/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const result = await pool.query("SELECT * FROM candidates WHERE email=$1", [
+      email,
+    ]);
+    if (result.rows.length === 0)
+      return res.status(401).json({ error: "User not found" });
+
+    const user = result.rows[0];
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword)
+      return res.status(401).json({ error: "Invalid password" });
+
+    delete user["password"];
+    const token = "token"; //generateToken(user);
+    res.json({ success: true, token: token, value: user });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
