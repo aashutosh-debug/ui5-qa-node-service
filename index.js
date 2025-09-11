@@ -246,7 +246,7 @@ app.post("/auth/candidate/login", async (req, res) => {
 
 //Tests
 
-//Get Candidate Tests List
+//Get Candidate Tests List for Candidates
 app.get("/test/candidate/:id", async (req, res) => {
   try {
     const candidate_id =  req.params.id;
@@ -268,6 +268,40 @@ app.get("/test/candidate/:id", async (req, res) => {
         WHERE t.candidate_id = $1;`,
       [
         candidate_id
+      ]
+    );
+    res.json({ success: true, value: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+//GET Candidates w.r.t Job from Test table
+app.get("/getCandidatesForJob/:id", async (req, res) => {
+  try {
+    const job_id =  req.params.id;
+    const result = await pool.query(`
+        SELECT 
+			      t.id,
+            t.job_post_id,
+            t.candidate_id,
+            t.score,
+            t.start_time,
+            t.end_time,
+            t.status,
+            c.name,
+            c.email,
+            c.phone,
+            c.experience,
+            c.location,
+            c.skills
+        FROM tests t
+        JOIN candidates c
+            ON t.candidate_id = c.id
+        WHERE t.job_post_id = $1;`,
+      [
+        job_id
       ]
     );
     res.json({ success: true, value: result.rows[0] });
