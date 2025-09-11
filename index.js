@@ -245,21 +245,88 @@ app.post("/auth/candidate/login", async (req, res) => {
 });
 
 //Tests
-app.post("/test", async (req, res) => {
+
+//Get Candidate Tests List
+app.get("/test/candidate/:id", async (req, res) => {
   try {
-    const {
-      job_post_id,
-      candidate_id
-    } = req.body;
-    const result = await pool.query(
-      "INSERT INTO tests (job_post_id, candidate_id, status) VALUES ($1, $2, $3) RETURNING id",
+    const candidate_id =  req.params.id;
+    const result = await pool.query(`SELECT 
+            t.job_post_id,
+            t.candidate_id,
+            t.score,
+            t.start_time,
+            t.end_time,
+            t.status,
+            j.title,
+            j.description,
+            c.company
+        FROM tests t
+        JOIN jobs j 
+            ON t.job_post_id = j.id
+        JOIN companies c 
+            ON j.company_id = c.id
+        WHERE t.candidate_id = $1;`,
       [
-        job_post_id,
-        candidate_id,
-        "CREATED"
+        candidate_id
       ]
     );
-    res.json({ success: true, test: result.rows[0] });
+    res.json({ success: true, value: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/test", async (req, res) => {
+
+   const {
+      job_post_id,
+      candidate_email,
+    } = req.body;
+
+  const client = await pool.connect();
+
+  try {
+
+    await client.query("BEGIN");
+
+    for (const candidateEmail of candidate_email) {
+      await client.query(
+        `INSERT INTO tests (job_post_id, candidate_id, status) VALUES (
+            $1, 
+            (SELECT id FROM public.candidates WHERE email = $2) , 
+            $3
+        ) 
+        ON CONFLICT DO NOTHING`,  // avoids duplicate assignment
+        [job_post_id, candidateEmail, "Initial"]
+      );
+    }
+
+    await client.query("COMMIT");
+    console.log("Candidates assigned successfully ");
+
+    res.json({ success: true });
+    } 
+    catch (err) {
+      await client.query("ROLLBACK");
+      console.error("Error assigning candidates", err);
+      res.status(500).json({ error: err.message });
+    } 
+    finally {
+      client.release();
+    }
+});
+
+
+app.delete("/test/:id", async (req, res) => {
+  try {
+    const id =  req.params.id;
+    const result = await pool.query(
+      "DELETE FROM tests WHERE id = $1 ",
+      [
+        id
+      ]
+    );
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
