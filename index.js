@@ -317,11 +317,13 @@ app.post("/test", async (req, res) => {
 });
 
 
-app.delete("/test/:id", async (req, res) => {
+app.post("/test/deleteCandidates", async (req, res) => {
   try {
-    const id =  req.params.id;
+     const {
+      id
+    } = req.body;
     const result = await pool.query(
-      "DELETE FROM tests WHERE id = $1 ",
+      "DELETE FROM tests WHERE id = ANY($1::int[]) ",
       [
         id
       ]
