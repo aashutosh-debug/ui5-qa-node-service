@@ -297,7 +297,7 @@ app.get("/getCandidatesForJob/:id", async (req, res) => {
             c.location,
             c.skills
         FROM tests t
-        JOIN candidates c
+        LEFT JOIN candidates c
             ON t.candidate_id = c.id
         WHERE t.job_post_id = $1;`,
       [
