@@ -270,7 +270,7 @@ app.get("/test/candidate/:id", async (req, res) => {
         candidate_id
       ]
     );
-    res.json({ success: true, value: result.rows[0] });
+    res.json({ success: true, value: result.rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -290,7 +290,7 @@ app.get("/getCandidatesForJob/:id", async (req, res) => {
             t.start_time,
             t.end_time,
             t.status,
-            t.email,
+            t.candidate_email as email,
             c.name,
             c.phone,
             c.experience,
