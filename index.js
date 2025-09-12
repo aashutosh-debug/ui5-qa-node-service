@@ -329,7 +329,7 @@ app.post("/test", async (req, res) => {
             $1, 
             (SELECT id FROM public.candidates WHERE email = $2) , 
             $2,
-            $4
+            $3
         ) 
         ON CONFLICT DO NOTHING`,  // avoids duplicate assignment
         [job_post_id, candidateEmail, "Initial"]
