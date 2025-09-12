@@ -291,6 +291,7 @@ app.get("/getCandidatesForJob/:id", async (req, res) => {
             t.end_time,
             t.status,
             t.candidate_email as email,
+            t.created_at,
             c.name,
             c.phone,
             c.experience,
