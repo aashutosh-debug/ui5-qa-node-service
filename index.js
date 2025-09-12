@@ -325,10 +325,11 @@ app.post("/test", async (req, res) => {
 
     for (const candidateEmail of candidate_email) {
       await client.query(
-        `INSERT INTO tests (job_post_id, candidate_id, status) VALUES (
+        `INSERT INTO tests (job_post_id, candidate_id, candidate_email, status) VALUES (
             $1, 
             (SELECT id FROM public.candidates WHERE email = $2) , 
-            $3
+            $2,
+            $4
         ) 
         ON CONFLICT DO NOTHING`,  // avoids duplicate assignment
         [job_post_id, candidateEmail, "Initial"]
