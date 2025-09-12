@@ -304,7 +304,7 @@ app.get("/getCandidatesForJob/:id", async (req, res) => {
         job_id
       ]
     );
-    res.json({ success: true, value: result.rows[0] });
+    res.json({ success: true, value: result.rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
