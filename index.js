@@ -410,16 +410,46 @@ app.post("/submitanswers", async (req, res) => {
     await client.query("BEGIN");
 
     for (const ans of answers) {
+
+      const qAns = await client.query(
+        `Select answers from questions where id = $1;`,  
+        [ans.question_id]
+      );
+
+      console.log(qAns.rows[0].answers);
+      console.log(ans.selected_options);
+
+      const orgAns = qAns.rows[0].answers;
+      let score = 100;
+
+      if (orgAns.length !== ans.selected_options.length || 
+        !orgAns.every((val, index) => val === ans.selected_options[index])){
+          score = 0;
+      }
+
+      // console.log(orgAns.length); //2
+      // console.log(ans.selected_options.length); //1
+      // console.log(orgAns.every((val, index) => val === ans.selected_options[index]));
+      // console.log(score);
+
       await client.query(
-        `INSERT INTO answers (candidate_id, question_id, answer_text) VALUES ($1, $2, $3) 
+        `INSERT INTO answers (candidate_id, question_id, answer_text, score, test_id) VALUES ($1, $2, $3, $4, $5) 
           ON CONFLICT DO NOTHING`,  // avoids duplicate assignment
-        [candidate_id, ans.question_id, ans.selected_options]
+        [candidate_id, ans.question_id, ans.selected_options, score, testid]
       );
     }
 
+    const scores = await client.query(
+        `Select score from answers where test_id = $1 and candidate_id = $2;`,  
+        [testid, candidate_id]
+      );
+
+    // console.log("scores.rows[0].score",scores.rows);
+    let totalScore = scores.rows.reduce((sum, item) => sum + parseFloat(item.score), 0)/ scores.rows.length;
+
     await client.query(
-        `UPDATE tests SET status = 'Submitted' where id = $1;` , 
-        [testid]
+        `UPDATE tests SET status = 'Submitted', score = $2, end_time = now() where id = $1;` , 
+        [testid, totalScore]
       );
 
     await client.query("COMMIT");
