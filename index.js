@@ -251,6 +251,7 @@ app.get("/test/candidate/:id", async (req, res) => {
   try {
     const candidate_id =  req.params.id;
     const result = await pool.query(`SELECT 
+            t.id as test_id,
             t.job_post_id,
             t.candidate_id,
             t.score,
