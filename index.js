@@ -403,7 +403,7 @@ app.get("/test/end/:id", async (req, res) => {
 
 app.post("/submitanswers", async (req, res) => {
 
-  const { candidate_id, answers } = req.body;
+  const { candidate_id, answers, testid } = req.body;
   const client = await pool.connect();
   try {
 
@@ -416,6 +416,11 @@ app.post("/submitanswers", async (req, res) => {
         [candidate_id, ans.question_id, ans.selected_options]
       );
     }
+
+    await client.query(
+        `UPDATE tests SET status = 'Submitted' where id = $1;` , 
+        [testid]
+      );
 
     await client.query("COMMIT");
     console.log("Test Submitted successfully ");
