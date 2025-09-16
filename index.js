@@ -402,7 +402,7 @@ app.get("/test/end/:id", async (req, res) => {
 
 app.post("/submitanswers", async (req, res) => {
 
-  const { candidate_id, question_id, answers } = req.body;
+  const { candidate_id, answers } = req.body;
   const client = await pool.connect();
   try {
 
@@ -412,7 +412,7 @@ app.post("/submitanswers", async (req, res) => {
       await client.query(
         `INSERT INTO answers (candidate_id, question_id, answer_text) VALUES ($1, $2, $3) 
           ON CONFLICT DO NOTHING`,  // avoids duplicate assignment
-        [candidate_id, question_id, ans]
+        [candidate_id, ans.question_id, ans.selected_options]
       );
     }
 
