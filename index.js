@@ -400,6 +400,37 @@ app.get("/test/end/:id", async (req, res) => {
   }
 });
 
+app.post("/submitanswers", async (req, res) => {
+
+  const { candidate_id, question_id, answers } = req.body;
+  const client = await pool.connect();
+  try {
+
+    await client.query("BEGIN");
+
+    for (const ans of answers) {
+      await client.query(
+        `INSERT INTO answers (candidate_id, question_id, answer_text) VALUES ($1, $2, $3) 
+          ON CONFLICT DO NOTHING`,  // avoids duplicate assignment
+        [candidate_id, question_id, ans]
+      );
+    }
+
+    await client.query("COMMIT");
+    console.log("Test Submitted successfully ");
+
+    res.json({ success: true });
+    } 
+    catch (err) {
+      await client.query("ROLLBACK");
+      console.error("Error submitting Test", err);
+      res.status(500).json({ error: err.message });
+    } 
+    finally {
+      client.release();
+    }
+});
+
 // app.get('/', (req, res)=>{
 //     res.status(200);
 //     res.send("Welcome to root URL of Server");
