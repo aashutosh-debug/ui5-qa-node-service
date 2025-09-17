@@ -61,13 +61,13 @@ app.post("/auth/company/login", async (req, res) => {
     ]);
 
     if (result.rows.length === 0)
-      return res.status(401).json({ error: "User not found" });
+      return res.status(401).json({ success: false, message: "Invalid Credentials" });
 
     const user = result.rows[0];
 
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword)
-      return res.status(401).json({ error: "Invalid Credentials" });
+      return res.status(401).json({ success: false, message: "Invalid Credentials" });
 
     delete user["password"];
     //const token = "token"; //generateToken(user);
