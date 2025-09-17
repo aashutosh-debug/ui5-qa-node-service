@@ -247,9 +247,10 @@ app.post("/auth/candidate/login", async (req, res) => {
 //Tests
 
 //Get Candidate Tests List for Candidates
-app.get("/test/candidate/:id", async (req, res) => {
+app.post("/test/candidate/:id", async (req, res) => {
   try {
-    const candidate_email =  req.params.id;
+    // const candidate_email =  req.params.id;
+    const { id } = req.body;
     const result = await pool.query(`SELECT 
             t.id as test_id,
             t.job_post_id,
@@ -267,9 +268,9 @@ app.get("/test/candidate/:id", async (req, res) => {
             ON t.job_post_id = j.id
         JOIN companies c 
             ON j.company_id = c.id
-        WHERE t.candidate_id = $1;`,
+        WHERE t.candidate_email = $1;`,
       [
-        candidate_email
+        id
       ]
     );
     res.json({ success: true, value: result.rows });
