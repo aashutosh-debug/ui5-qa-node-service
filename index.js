@@ -247,7 +247,7 @@ app.post("/auth/candidate/login", async (req, res) => {
 //Tests
 
 //Get Candidate Tests List for Candidates
-app.post("/test/candidate/:id", async (req, res) => {
+app.post("/test/candidate", async (req, res) => {
   try {
     // const candidate_email =  req.params.id;
     const { id } = req.body;
