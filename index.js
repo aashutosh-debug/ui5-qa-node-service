@@ -1,7 +1,7 @@
 import express from "express";
 import pg from "pg";
 import bcrypt from "bcrypt";
-// import jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import cors from "cors";
 import dotenv from "dotenv";
 
@@ -20,6 +20,21 @@ const { Pool } = pg;
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
+
+const SECRET_KEY = process.env.SECRET_KEY; 
+
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1]; // "Bearer <token>"
+
+  if (!token) return res.sendStatus(401);
+
+  jwt.verify(token, SECRET_KEY, (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user; // attach decoded user info
+    next();
+  });
+}
 
 //Company
 // Auth: Signup
@@ -44,24 +59,31 @@ app.post("/auth/company/login", async (req, res) => {
     const result = await pool.query("SELECT * FROM companies WHERE email=$1", [
       email,
     ]);
+
     if (result.rows.length === 0)
       return res.status(401).json({ error: "User not found" });
 
     const user = result.rows[0];
+
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword)
-      return res.status(401).json({ error: "Invalid password" });
+      return res.status(401).json({ error: "Invalid Credentials" });
 
     delete user["password"];
-    const token = "token"; //generateToken(user);
+    //const token = "token"; //generateToken(user);
+
+    // Generate JWT token
+    const token = jwt.sign({ id: user.id }, SECRET_KEY, { expiresIn: "1h" });
     res.json({ success: true, token: token, value: user });
+
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 //Jobs
-app.post("/addjobs", async (req, res) => {
+app.post("/addjobs", authenticateToken, async (req, res) => {
   try {
     const { title, description, company_id } = req.body;
     const result = await pool.query(
@@ -74,7 +96,7 @@ app.post("/addjobs", async (req, res) => {
   }
 });
 
-app.put("/jobs/:id", async (req, res) => {
+app.put("/jobs/:id", authenticateToken, async (req, res) => {
   try {
     const id = req.params.id;
     const { title, description } = req.body;
@@ -90,7 +112,8 @@ app.put("/jobs/:id", async (req, res) => {
 });
 
 //Get Jobs
-app.get("/jobs/:id", async (req, res) => {
+//id = Company ID
+app.get("/jobs/:id", authenticateToken, async (req, res) => {
   try {
     const companyId =  req.params.id;
     const result = await pool.query("SELECT id, title, description, created_at, company_id FROM jobs WHERE company_id=$1", [
@@ -103,7 +126,7 @@ app.get("/jobs/:id", async (req, res) => {
 });
 
 //Delete Job
-app.get("/job/delete/:id", async (req, res) => {
+app.get("/job/delete/:id", authenticateToken, async (req, res) => {
   const client = await pool.connect();
   try {
     //const client = await pool.connect();
@@ -127,7 +150,7 @@ app.get("/job/delete/:id", async (req, res) => {
 
 
 //Questions
-app.post("/question", async (req, res) => {
+app.post("/question", authenticateToken, async (req, res) => {
   try {
     const {
       job_id,
@@ -158,7 +181,7 @@ app.post("/question", async (req, res) => {
   }
 });
 
-app.get("/question/:job_id", async (req, res) => {
+app.get("/question/:job_id", authenticateToken, async (req, res) => {
   try {
     const job_id = req.params.job_id;
     const result = await pool.query("SELECT * FROM questions WHERE job_id=$1", [
@@ -174,7 +197,7 @@ app.get("/question/:job_id", async (req, res) => {
 });
 
 //Delete Questions
-app.post("/question/delete", async (req, res) => {
+app.post("/question/delete", authenticateToken, async (req, res) => {
   try {
     const {
       ids
@@ -247,7 +270,7 @@ app.post("/auth/candidate/login", async (req, res) => {
 //Tests
 
 //Get Candidate Tests List for Candidates
-app.post("/test/candidate", async (req, res) => {
+app.post("/test/candidate", authenticateToken, async (req, res) => {
   try {
     // const candidate_email =  req.params.id;
     const { id } = req.body;
@@ -281,7 +304,7 @@ app.post("/test/candidate", async (req, res) => {
 
 
 //GET Candidates w.r.t Job from Test table
-app.get("/getCandidatesForJob/:id", async (req, res) => {
+app.get("/getCandidatesForJob/:id", authenticateToken, async (req, res) => {
   try {
     const job_id =  req.params.id;
     const result = await pool.query(`
@@ -314,7 +337,7 @@ app.get("/getCandidatesForJob/:id", async (req, res) => {
   }
 });
 
-app.post("/test", async (req, res) => {
+app.post("/test", authenticateToken, async (req, res) => {
 
    const {
       job_post_id,
@@ -356,7 +379,7 @@ app.post("/test", async (req, res) => {
 });
 
 
-app.post("/test/deleteCandidates", async (req, res) => {
+app.post("/test/deleteCandidates", authenticateToken, async (req, res) => {
   try {
      const {
       id
@@ -373,7 +396,7 @@ app.post("/test/deleteCandidates", async (req, res) => {
   }
 });
 
-app.get("/test/start/:id", async (req, res) => {
+app.get("/test/start/:id", authenticateToken, async (req, res) => {
   try {
     const id =  req.params.id;
     const result = await pool.query(
@@ -388,7 +411,7 @@ app.get("/test/start/:id", async (req, res) => {
   }
 });
 
-app.get("/test/end/:id", async (req, res) => {
+app.get("/test/end/:id", authenticateToken, async (req, res) => {
   try {
     const id =  req.params.id;
     const result = await pool.query(
@@ -403,7 +426,7 @@ app.get("/test/end/:id", async (req, res) => {
   }
 });
 
-app.post("/submitanswers", async (req, res) => {
+app.post("/submitanswers", authenticateToken, async (req, res) => {
 
   const { candidate_id, answers, testid } = req.body;
   const client = await pool.connect();
