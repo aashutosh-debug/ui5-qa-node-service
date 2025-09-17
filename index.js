@@ -252,15 +252,18 @@ app.post("/auth/candidate/login", async (req, res) => {
       email,
     ]);
     if (result.rows.length === 0)
-      return res.status(401).json({ error: "User not found" });
+      return res.status(401).json({ success: false, message: "Invalid Credentials" });
 
     const user = result.rows[0];
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword)
-      return res.status(401).json({ error: "Invalid password" });
+      return res.status(401).json({ success: false, message: "Invalid Credentials" });
 
     delete user["password"];
-    const token = "token"; //generateToken(user);
+    // const token = "token"; //generateToken(user);
+    // res.json({ success: true, token: token, value: user });
+
+    const token = jwt.sign({ user: user }, SECRET_KEY, { expiresIn: "1h" });
     res.json({ success: true, token: token, value: user });
   } catch (err) {
     res.status(500).json({ error: err.message });
