@@ -495,10 +495,59 @@ app.post("/submitanswers", authenticateToken, async (req, res) => {
     }
 });
 
-// app.get('/', (req, res)=>{
-//     res.status(200);
-//     res.send("Welcome to root URL of Server");
-// });
+app.post("/support", async (req, res) => {
+  try {
+    const {
+      user_id,
+      subject,
+      description,
+      user_type
+    } = req.body;
+
+    var type = 0;
+    if(user_type === "C") {
+      type = 1;
+    }
+    else if(user_type === "D"){
+      type = 2;
+    }
+      const result = await pool.query(
+        "INSERT INTO support_tickets (user_id,subject,description,status,user_type) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+        [
+          user_id,
+          subject,
+          description,
+          "Initial",
+          type
+        ]
+      );
+      res.json({ success: true });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/getsupport/:id", async (req, res) => {
+  try {
+   
+    const user_id =  req.params.id;
+    const result = await pool.query(`
+        SELECT 
+			      subject,
+            description,
+            description
+        FROM support_tickets
+        WHERE user_id = $1;`,
+      [
+        user_id
+      ]
+    );
+    res.json({ success: true, value: result.rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 app.listen(PORT, (error) => {
   if (!error)
