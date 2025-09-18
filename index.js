@@ -536,7 +536,7 @@ app.get("/getsupport/:id", authenticateToken, async (req, res) => {
         SELECT 
 			      subject,
             description,
-            description
+            status
         FROM support_tickets
         WHERE user_id = $1;`,
       [
