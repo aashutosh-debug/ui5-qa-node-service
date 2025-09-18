@@ -495,7 +495,7 @@ app.post("/submitanswers", authenticateToken, async (req, res) => {
     }
 });
 
-app.post("/support", async (req, res) => {
+app.post("/support", authenticateToken, async (req, res) => {
   try {
     const {
       user_id,
@@ -528,7 +528,7 @@ app.post("/support", async (req, res) => {
   }
 });
 
-app.get("/getsupport/:id", async (req, res) => {
+app.get("/getsupport/:id", authenticateToken, async (req, res) => {
   try {
    
     const user_id =  req.params.id;
