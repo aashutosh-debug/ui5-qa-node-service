@@ -12,7 +12,8 @@ export default async function sendMail(to_email, token) {
 
     // const token = jwt.sign({ email: to_email }, SECRET_KEY, { expiresIn: "15m" });
     
-    const resetLink = `https://sapui5-dist.onrender.com/ResetPassword?token=${token}`;
+    // const resetLink = `https://sapui5-dist.onrender.com/ResetPassword?token=${token}`;
+    const resetLink = `https://sapui5-dist.onrender.com/ResetPassword/${token}`;
 
     const htmlTemplate = fs
       .readFileSync("forgotpassword.html", "utf8")

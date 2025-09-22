@@ -571,16 +571,17 @@ app.post("/forgotpassword", async (req, res) => {
     const token = jwt.sign({ email: email, type: type }, SECRET_KEY, { expiresIn: "15m" });
 
     const result = await pool.query(
-      // "UPDATE " + tbl + " SET reset_token = $1 WHERE email = $2 RETURNING id",
-      "SELECT id from " + tbl + " WHERE email = $1;",
+      "UPDATE " + tbl + " SET reset_token = $1 WHERE email = $2 RETURNING id",
+      // "SELECT id from " + tbl + " WHERE email = $1;",
       [
-        email
+        token, email
       ]
     );
 
-    if(result.rows[0]) sendMail(email, token);
+    if(result.rows[0]) await sendMail(email, token);
 
     res.json({ success: true });
+
   } catch (err) {
     console.error("Error:", err);
     res.status(500).send("Error sending email");
@@ -602,7 +603,7 @@ app.post("/resetpassword", async (req, res) => {
 
     jwt.verify(token, SECRET_KEY, async (err, user) => {
       if (err) return res.sendStatus(403);
-      console.log(user);
+      // console.log(user);
 
       let tbl = null;
       if(user.type === "C")
@@ -613,13 +614,11 @@ app.post("/resetpassword", async (req, res) => {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       const result = await pool.query(
-        "UPDATE " + tbl + " SET password = $1 WHERE email = $2 RETURNING id",
+        "UPDATE " + tbl + " SET password = $1, reset_token = null WHERE email = $2 and reset_token = $3 RETURNING id",
         [
-          hashedPassword, user.email
+          hashedPassword, user.email, token
         ]
       );
-
-      // console.log(result.rows[0]);
 
       res.json({ success: true });
 
