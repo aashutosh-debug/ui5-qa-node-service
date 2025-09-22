@@ -4,13 +4,14 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import cors from "cors";
 import dotenv from "dotenv";
+import sendMail from "./mail.js";
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
 app.use(cors({
-  origin: "*",   // Or restrict to SAP BAS URL
+  origin: "https://ui5-qa-node-service.onrender.com",   // Or restrict to SAP BAS URL
   methods: "GET,POST,PUT,DELETE,OPTIONS",
   allowedHeaders: "Content-Type,Authorization"
 }));
@@ -534,9 +535,11 @@ app.get("/getsupport/:id", authenticateToken, async (req, res) => {
     const user_id =  req.params.id;
     const result = await pool.query(`
         SELECT 
+            id,
 			      subject,
             description,
-            status
+            status,
+            created_at
         FROM support_tickets
         WHERE user_id = $1;`,
       [
@@ -546,6 +549,85 @@ app.get("/getsupport/:id", authenticateToken, async (req, res) => {
     res.json({ success: true, value: result.rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/forgotpassword", async (req, res) => {
+  try{
+
+    const {
+      email,
+      type
+    } = req.body;
+
+    let tbl = null;
+    if(type === "C")
+       tbl = "companies"
+    else
+       tbl = "candidates"
+
+    const SECRET_KEY = process.env.SECRET_KEY; 
+    
+    const token = jwt.sign({ email: email, type: type }, SECRET_KEY, { expiresIn: "15m" });
+
+    const result = await pool.query(
+      // "UPDATE " + tbl + " SET reset_token = $1 WHERE email = $2 RETURNING id",
+      "SELECT id from " + tbl + " WHERE email = $1;",
+      [
+        email
+      ]
+    );
+
+    if(result.rows[0]) sendMail(email, token);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error:", err);
+    res.status(500).send("Error sending email");
+  }
+});
+
+
+app.post("/resetpassword", async (req, res) => {
+  try{
+
+    const {
+      password,
+      token
+    } = req.body;
+
+    if (!token || !password) return res.sendStatus(401);
+
+    const SECRET_KEY = process.env.SECRET_KEY; 
+
+    jwt.verify(token, SECRET_KEY, async (err, user) => {
+      if (err) return res.sendStatus(403);
+      console.log(user);
+
+      let tbl = null;
+      if(user.type === "C")
+       tbl = "companies";
+      else
+        tbl = "candidates";
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const result = await pool.query(
+        "UPDATE " + tbl + " SET password = $1 WHERE email = $2 RETURNING id",
+        [
+          hashedPassword, user.email
+        ]
+      );
+
+      // console.log(result.rows[0]);
+
+      res.json({ success: true });
+
+    });
+  
+  } catch (err) {
+    console.error("Error:", err);
+    res.status(500).send("Error resetting password");
   }
 });
 
