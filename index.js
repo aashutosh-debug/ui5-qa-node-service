@@ -128,7 +128,7 @@ app.put("/jobs/:id", authenticateToken, async (req, res) => {
 app.get("/jobs/:id", authenticateToken, async (req, res) => {
   try {
     const companyId =  req.params.id;
-    const result = await pool.query("SELECT id, title, description, created_at, company_id FROM jobs WHERE company_id=$1", [
+    const result = await pool.query("SELECT id, title, description, created_at, company_id, skills FROM jobs WHERE company_id=$1", [
       companyId
     ]);
     res.json({ success: true, value: result.rows });
