@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import cors from "cors";
 import dotenv from "dotenv";
 import sendMail from "./mail.js";
+import genAI from "./ai.js";
 
 dotenv.config();
 
@@ -42,6 +43,16 @@ function authenticateToken(req, res, next) {
 app.post("/auth/company/signup", async (req, res) => {
   try {
     const { name, email, password, website, phone, company } = req.body;
+
+    const data = await pool.query(
+      "SELECT id from companies WHERE email = $1;",
+      [email]
+    );
+
+    if(data.rows[0]){
+        return res.status(500).json({ success: false, message: "User already exists."});
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await pool.query(
       "INSERT INTO companies (name, email, password, website, phone, company ) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
@@ -226,6 +237,16 @@ app.post("/auth/candidate/signup", async (req, res) => {
       experience,
       location 
     } = req.body;
+
+    const data = await pool.query(
+      "SELECT id from candidates WHERE email = $1;",
+      [email]
+    );
+
+    if(data.rows[0]){
+        return res.status(500).json({ success: false, message: "User already exists."});
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await pool.query(
       "INSERT INTO candidates (name, email, password, phone, skills, experience, location) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
@@ -602,8 +623,16 @@ app.post("/resetpassword", async (req, res) => {
     const SECRET_KEY = process.env.SECRET_KEY; 
 
     jwt.verify(token, SECRET_KEY, async (err, user) => {
-      if (err) return res.sendStatus(403);
-      // console.log(user);
+      if (err) {
+        if (err.name === "TokenExpiredError") {
+          console.error("Token expired:", err.message);
+        } else if (err.name === "JsonWebTokenError") {
+          console.error("Invalid token:", err.message);
+        } else {
+          console.error("Token verification failed:", err.message);
+        }
+        return res.status(403).json({success: false, message: err.message});
+      }
 
       let tbl = null;
       if(user.type === "C")
@@ -627,6 +656,31 @@ app.post("/resetpassword", async (req, res) => {
   } catch (err) {
     console.error("Error:", err);
     res.status(500).send("Error resetting password");
+  }
+});
+
+app.post("/getquesai", authenticateToken, async (req, res) => {
+  try {
+    const {
+      company_id,
+      skills  //comma separated
+    } = req.body;
+
+   const prompt = `
+      Create 10 MCQs (JSON format) on `+ skills + `. 
+      Each MCQ must have: question, 4 options (array), mix of 1 or more correct answer (array). 
+      Example: [{"q": "Q?", "o": ["A", "B", "C", "D"], "a": [#]}]
+      `;
+
+    let aiRes = await genAI(prompt);
+    let totalTokenCount =  aiRes.totalTokenCount;
+
+    let cleaned = aiRes.text.replace(/```json|```/g, "").trim();
+    let mcqs = JSON.parse(cleaned);
+    res.json({ success: true, value: mcqs });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
