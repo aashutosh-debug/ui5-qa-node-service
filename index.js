@@ -97,10 +97,10 @@ app.post("/auth/company/login", async (req, res) => {
 //Jobs
 app.post("/addjobs", authenticateToken, async (req, res) => {
   try {
-    const { title, description, company_id } = req.body;
+    const { title, description, company_id, skills } = req.body;
     const result = await pool.query(
-      "INSERT INTO jobs (title, description, company_id) VALUES ($1, $2, $3) RETURNING id",
-      [title, description, company_id]
+      "INSERT INTO jobs (title, description, company_id, skills) VALUES ($1, $2, $3, $4) RETURNING id",
+      [title, description, company_id, skills]
     );
     res.json({ success: true, jobs: result.rows[0] });
   } catch (err) {
@@ -111,10 +111,10 @@ app.post("/addjobs", authenticateToken, async (req, res) => {
 app.put("/jobs/:id", authenticateToken, async (req, res) => {
   try {
     const id = req.params.id;
-    const { title, description } = req.body;
+    const { title, description, skills } = req.body;
     const result = await pool.query(
-      "UPDATE jobs SET title = $1, description = $2 WHERE id = $3 RETURNING id",
-      [title, description, id]
+      "UPDATE jobs SET title = $1, description = $2, skills = $3 WHERE id = $4 RETURNING id",
+      [title, description, skills, id]
     );
     res.json({ success: true, jobs: result.rowCount });
   } catch (err) {
