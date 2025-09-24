@@ -113,7 +113,7 @@ app.put("/jobs/:id", authenticateToken, async (req, res) => {
     const id = req.params.id;
     const { title, description, skills } = req.body;
     const result = await pool.query(
-      "UPDATE jobs SET title = $1, description = $2, skills = $3 WHERE id = $4 RETURNING id",
+      "UPDATE jobs SET title = $1, description = $2, skills = $3 WHERE id = $4 RETURNING *",
       [title, description, skills, id]
     );
     res.json({ success: true, jobs: result.rowCount });
