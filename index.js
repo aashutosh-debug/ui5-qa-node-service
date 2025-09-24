@@ -116,7 +116,7 @@ app.put("/jobs/:id", authenticateToken, async (req, res) => {
       "UPDATE jobs SET title = $1, description = $2, skills = $3 WHERE id = $4 RETURNING *",
       [title, description, skills, id]
     );
-    console.log(result);
+    // console.log(result);
     res.json({ success: true, jobs: result.rows[0] });
   } catch (err) {
     console.log(err);
@@ -660,7 +660,7 @@ app.post("/resetpassword", async (req, res) => {
   }
 });
 
-app.post("/getquesai", authenticateToken, async (req, res) => {
+app.post("/getquesai", async (req, res) => {
   try {
     const {
       company_id,
@@ -674,8 +674,13 @@ app.post("/getquesai", authenticateToken, async (req, res) => {
       `;
 
     let aiRes = await genAI(prompt);
-    let totalTokenCount =  aiRes.totalTokenCount;
+    let totalTokenCount =  aiRes.usageMetadata.totalTokenCount;
 
+    const result = await pool.query(
+      "INSERT INTO company_ai_tokens (company_id, token) VALUES ($1,$2) RETURNING id",
+      [company_id, totalTokenCount]
+    );
+    
     let cleaned = aiRes.text.replace(/```json|```/g, "").trim();
     let mcqs = JSON.parse(cleaned);
     res.json({ success: true, value: mcqs });

@@ -1,7 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 
 export default async function genAI(prompt) {
-  try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
     const response = await ai.models.generateContent({
@@ -15,7 +14,5 @@ export default async function genAI(prompt) {
     });
 
     return response;
-  } catch (err) {
-    console.error("Error:", err);
-  }
+  
 }
