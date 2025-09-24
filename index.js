@@ -116,7 +116,8 @@ app.put("/jobs/:id", authenticateToken, async (req, res) => {
       "UPDATE jobs SET title = $1, description = $2, skills = $3 WHERE id = $4 RETURNING *",
       [title, description, skills, id]
     );
-    res.json({ success: true, jobs: result.rowCount });
+    console.log(result);
+    res.json({ success: true, jobs: result.rows[0] });
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: err.message });
