@@ -686,7 +686,7 @@ app.post("/getquesai", async (req, res) => {
     res.json({ success: true, value: mcqs });
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
