@@ -660,7 +660,7 @@ app.post("/resetpassword", async (req, res) => {
   }
 });
 
-app.post("/getquesai", async (req, res) => {
+app.post("/getquesai", authenticateToken, async (req, res) => {
   try {
     const {
       company_id,
@@ -674,15 +674,32 @@ app.post("/getquesai", async (req, res) => {
       `;
 
     let aiRes = await genAI(prompt);
+    
     let totalTokenCount =  aiRes.usageMetadata.totalTokenCount;
+    let cleaned = aiRes.text.replace(/```json|```/g, "").trim();
+    let mcqs = JSON.parse(cleaned);
 
-    const result = await pool.query(
+    const client = await pool.connect();
+
+    await client.query("BEGIN");
+
+    await pool.query(
       "INSERT INTO company_ai_tokens (company_id, token) VALUES ($1,$2) RETURNING id",
       [company_id, totalTokenCount]
     );
-    
-    let cleaned = aiRes.text.replace(/```json|```/g, "").trim();
-    let mcqs = JSON.parse(cleaned);
+
+    for (const mcq of mcqs) {
+      await client.query(
+        `INSERT INTO ai_questions (question_text, question_type, difficulty, options, answers) VALUES (
+            $1, $2, $3, $4, $5
+        ) 
+        ON CONFLICT DO NOTHING`,  // avoids duplicate assignment
+        [mcq.q, "mcq", "easy", mcq.o, mcq.a]
+      );
+    }
+
+    await client.query("COMMIT");
+
     res.json({ success: true, value: mcqs });
 
   } catch (err) {
