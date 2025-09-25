@@ -209,8 +209,7 @@ app.post("/batchquestion", authenticateToken, async (req, res) => {
     for (const q of questions) {
       await client.query(
        `INSERT INTO questions (job_id, question_text, question_type, company_id, difficulty, created_by, options, answers) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id,
-        ON CONFLICT DO NOTHING`,  // avoids duplicate assignment
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, 
         [
           q.job_id,
           q.question_text,
