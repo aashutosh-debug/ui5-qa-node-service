@@ -21,16 +21,18 @@ export default async function sendMail(to_email, token) {
 
     const transporter = nodemailer.createTransport({
       secure: false,
-      host: "smtp.gmail.com",
+      //host: "smtp.gmail.com",
+      host: "smtp.zoho.in",
       port: 587,
+      // port: "465",
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: process.env.EMAIL_USERZ,
+        pass: process.env.EMAIL_PASSZ,
       },
     });
 
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: process.env.EMAIL_USERZ,
       to: to_email,
       subject: "Hello from talenttrials",
     //   text: "This works on Render!",
