@@ -194,6 +194,54 @@ app.post("/question", authenticateToken, async (req, res) => {
   }
 });
 
+app.post("/batchquestion", authenticateToken, async (req, res) => {
+  try {
+    const {
+      questions
+    } = req.body;
+
+    const client = await pool.connect();
+
+  try {
+
+    await client.query("BEGIN");
+
+    for (const q of questions) {
+      await client.query(
+       `INSERT INTO questions (job_id, question_text, question_type, company_id, difficulty, created_by, options, answers) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id,
+        ON CONFLICT DO NOTHING`,  // avoids duplicate assignment
+        [
+          q.job_id,
+          q.question_text,
+          q.question_type,
+          q.company_id,
+          q.difficulty,
+          q.created_by,
+          q.options,
+          q.answers
+        ]
+        );
+    }
+
+    await client.query("COMMIT");
+    
+    res.json({ success: true });
+    } 
+    catch (err) {
+      await client.query("ROLLBACK");
+      console.error("Error creating Batch Questions", err);
+      res.status(500).json({ success: false, error: err.message });
+    } 
+    finally {
+      client.release();
+    }
+    
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get("/question/:job_id", authenticateToken, async (req, res) => {
   try {
     const job_id = req.params.job_id;
